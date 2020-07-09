@@ -1,0 +1,22 @@
+# Maintainer: Hussein Al Abry <zidhussein at gmail dot com>
+# Patcher   : Friday13  | ytoluyag@gmail.com
+pkgname=material-design-icons
+pkgver=3.0.1
+pkgrel=1
+
+pkgdesc="Google Material Design icon font"
+url="https://github.com/google/material-design-icons"
+license=('custom:"Apache"')
+
+arch=('any')
+source=("https://github.com/google/material-design-icons/archive/$pkgver.zip"
+    "LICENSE")
+sha256sums=('722e3b09121b82a3746f3da2ecd3a2db8d7d24153b8433324315695a45f06a90'
+    '58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd')
+
+package() {
+    install -D -m644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    ## test font
+    install -d "$pkgdir/usr/share/fonts/TTF"
+    install -m644 "$pkgname-$pkgver/iconfont/MaterialIcons-Regular.ttf" "$pkgdir/usr/share/fonts/TTF/MaterialIcons-Regular.ttf"
+}
