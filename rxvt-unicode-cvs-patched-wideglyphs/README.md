@@ -1,0 +1,1 @@
+https://aur.archlinux.org/packages/rxvt-unicode-cvs-patched-wideglyphs
