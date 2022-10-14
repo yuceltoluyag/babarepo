@@ -4,3 +4,9 @@ fix linux 6.0 patch nvidia-390xx
 
 
 [Fuck Fuck Go](https://yuceltoluyag.github.io/linux-ekran-karti-kurulumu/)
+
+* this patch is not working properly.
+* Install linux-lts kernel, all your problems will be solved
+# Problem
+ That patch unfortunately disablea ACPI function thus limiting my max GPU performance level (from perf 2 (Graphics 525MHz, Memory 3000MHz, Processor 1050MHz) to perf 1 (Graphics 73MHz, Memory 648MHz, Processor 101MHz))
+ 
