@@ -1,0 +1,71 @@
+# Maintainer: Jonathon Fernyhough <jonathon+m2x+dev>
+# Contributor: Alonso Rodriguez <alonsorodi20 (at) gmail (dot) com>
+# Contributor: James Rayner <iphitus@gmail.com>
+# Contributor: Sven-Hendrik Haase <sh@lutzhaase.com>
+# Contributor: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Thomas Baechler <thomas@archlinux.org>
+
+pkgname=nvidia-390xx-dkms
+pkgver=390.154
+pkgrel=2
+pkgdesc="NVIDIA dkms drivers for linux, 390xx legacy branch"
+arch=('x86_64')
+url="https://www.nvidia.com/"
+conflicts=('nvidia')
+license=('custom')
+options=('!strip')
+_pkg="NVIDIA-Linux-x86_64-${pkgver}-no-compat32"
+source=("https://us.download.nvidia.com/XFree86/Linux-x86_64/${pkgver}/${_pkg}.run"
+        'kernel-4.16.patch'
+        'kernel-6.0.patch')
+sha512sums=('aafaf05f21ca3d9eac38844219a6ef8b1395b74750b3a3f5623e1ddf004dd7d459dba883e55906c178c2c6090422b635772caf794fdd83196d2ddef52e0f6a67'
+            'c04eb3b69dec3c3f7af45403f338559a48252146ce29516edf609b863593a27004514688c1ade3bd0eeaf87a15feec1445048cee50d2777bb715426e92e209c6'
+            '6afda7baef87c915e30c3630b16c3245f9f8d35da1fc051c4881862b0c5368ca0cc8b522548cba26131d56ef5f053dba6a203a6ca1b41dd1202bf4cd4747267e')
+
+prepare() {
+    sh "${_pkg}.run" --extract-only
+    cd "${_pkg}"
+
+    # Restore phys_to_dma support (still needed for 396.18)
+    # https://bugs.archlinux.org/task/58074
+    patch -Np1 -i "$srcdir/kernel-4.16.patch"
+
+    cd kernel
+
+    # https://gist.github.com/joanbm/9f5e8150723912b3809f4de536974155
+    patch -Np1 -i "$srcdir/kernel-6.0.patch"
+
+    sed -i "s/__VERSION_STRING/${pkgver}/" dkms.conf
+    sed -i 's/__JOBS/`nproc`/' dkms.conf
+    sed -i 's/__DKMS_MODULES//' dkms.conf
+    sed -i '$iBUILT_MODULE_NAME[0]="nvidia"\
+DEST_MODULE_LOCATION[0]="/kernel/drivers/video"\
+BUILT_MODULE_NAME[1]="nvidia-uvm"\
+DEST_MODULE_LOCATION[1]="/kernel/drivers/video"\
+BUILT_MODULE_NAME[2]="nvidia-modeset"\
+DEST_MODULE_LOCATION[2]="/kernel/drivers/video"\
+BUILT_MODULE_NAME[3]="nvidia-drm"\
+DEST_MODULE_LOCATION[3]="/kernel/drivers/video"' dkms.conf
+
+    # Gift for linux-rt guys
+    sed -i 's/NV_EXCLUDE_BUILD_MODULES/IGNORE_PREEMPT_RT_PRESENCE=1 NV_EXCLUDE_BUILD_MODULES/' dkms.conf
+}
+
+package() {
+    pkgdesc="NVIDIA driver sources for linux, 390xx legacy branch"
+    depends=('dkms' "nvidia-390xx-utils=$pkgver" 'libglvnd')
+    provides=("nvidia-390xx=$pkgver")
+    conflicts+=('nvidia-390xx')
+
+    cd ${_pkg}
+
+    install -dm 755 "${pkgdir}"/usr/src
+    cp -dr --no-preserve='ownership' kernel \
+        "${pkgdir}/usr/src/nvidia-${pkgver}"
+
+    echo "blacklist nouveau" |
+        install -Dm644 /dev/stdin "${pkgdir}/usr/lib/modprobe.d/${pkgname}.conf"
+
+    install -Dt "${pkgdir}/usr/share/licenses/${pkgname}" \
+        -m644 "${srcdir}/${_pkg}/LICENSE"
+}
